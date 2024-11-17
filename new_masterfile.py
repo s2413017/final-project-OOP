@@ -14,7 +14,7 @@ class GeneralizedLinearModel:
         self._x_test = None
         # Parameters should be a matrix with the shape (p+1,1).
         self._params = None
-        # Mu should be a list with the length of (N_train) or (N_test)
+        # Mu should be a matrix of (1, N_train) or (1, N_test)
         self._mu = None
 
     def split(self):
@@ -31,7 +31,7 @@ class GeneralizedLinearModel:
         self._x_test = np.transpose(x_test)
         # print("xtest", self._x_test.shape)
     
-    def loglik(self):
+    def negloglik(self):
         raise NotImplementedError
     
     def fit(self):
@@ -45,8 +45,8 @@ class GeneralizedLinearModel:
         # Should have shape x=(p+1,N_train), y=(1,N_train)
         # print(self._x.shape)
         # print(self._y.shape)
-        results = minimize(self.loglik, init_params, args =(self._x,self._y))
-        # From a list create a numpy matrix with shape(p+1,1).
+        results = minimize(self.negloglik, init_params, args =(self._x,self._y))
+        # From a list create a numpy array with shape(p+1,1).
         self._params = np.array(results['x']).reshape(len(results['x']),1)
         # print(self._params.shape)
         # print(len(self._params)) #len should be p+1
@@ -55,7 +55,7 @@ class GeneralizedLinearModel:
     
     def predict(self):
         self.fit()
-        self.loglik(self._params,self._x_test,self._y)
+        self.negloglik(self._params,self._x_test,self._y)
         self._mu = np.asarray(self._mu).flatten()
         print(f"The estimated mean values are: {self._mu}")
         return self._mu
@@ -64,7 +64,7 @@ class NormalDistr(GeneralizedLinearModel):
     def __init__(self, x, y):
         super().__init__(x, y)
 
-    def loglik(self, params, x, y):
+    def negloglik(self, params, x, y):
         # Calculates eta by multiplying x transposed with beta parameters.
         # Should be (N, p+1) x (p+1, 1)
         new_x = np.transpose(x)
@@ -81,7 +81,7 @@ class PoissonDistr(GeneralizedLinearModel):
     def __init__(self, x, y):
         super().__init__(x, y)
 
-    def loglik(self, params, x, y):
+    def negloglik(self, params, x, y):
         # Calculates eta by multiplying x transposed with beta parameters.
         # Should be (N, p+1) x (p+1, 1)
         new_x = np.transpose(x)
@@ -98,7 +98,7 @@ class BernoulliDistr(GeneralizedLinearModel):
     def __init__(self, x, y):
         super().__init__(x, y)
 
-    def loglik(self, params, x, y):
+    def negloglik(self, params, x, y):
         # Calculates eta by multiplying x transposed with beta parameters.
         # Should be (N, p+1) x (p+1, 1)
         new_x = np.transpose(x)
@@ -116,23 +116,15 @@ class BernoulliDistr(GeneralizedLinearModel):
 # cars = StatsModel('income', ['education','prestige'])
 # cars.readData("Duncan","carData")
 
-# x1 = cars.getX
-# y1 = cars.getY
-
-# sample = NormalDistr(x1, y1)
-# # sample.fit()
-# # sample.split()
-# sample.predict()
+# sample1 = NormalDistr(cars.getX, cars.getY)
+# sample1.predict()
 
 # POISSON TEST
 
 # breaks = CSV("breaks", ["wool", "tension"])
 # breaks.readData("https://raw.githubusercontent.com/BI-DS/GRA-4152/refs/heads/master/warpbreaks.csv")
 
-# x2 = breaks.getX
-# y2 = breaks.getY
-
-# sample2 = PoissonDistr(x2,y2)
+# sample2 = PoissonDistr(breaks.getX, breaks.getY)
 # sample2.predict()
 
 # BERNOULLI TEST
@@ -140,8 +132,5 @@ class BernoulliDistr(GeneralizedLinearModel):
 # sample3 = StatsModel("GRADE", ["GPA","TUCE","PSI"])
 # sample3.readData("spector")
 
-# x3 = sample3.getX
-# y3 = sample3.getY
-
-# sample3 = BernoulliDistr(x3,y3)
+# sample3 = BernoulliDistr(sample3.getX, sample3.getY)
 # sample3.predict()
