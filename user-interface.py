@@ -6,21 +6,24 @@ parser = argparse.ArgumentParser(prog="General Linear Model",
         description=textwrap.dedent('''\
                                                        General Linear Model
                                      ------------------------------------------------------------
-                                     The General Linear Model takes a selected dataset, for which 
-                                     we specify which are the predicting parameters and which is
-                                     the parameter to be predicted. It uses the values in the
-                                     dataset to train the model and then tests it on a certain
-                                     number of samples.
+                                     The General Linear Model processes a chosen dataset,
+                                     specifying predictor variables and the target variable.
+                                     It trains the model using the dataset and tests it on
+                                     a defined subset of samples to get the predicted outcome.
                                     '''),
         epilog=textwrap.dedent('''\
                                      ------------------------------------------------------------
                                      The following information was used to invoke the model:
-                                            --model : defined the family of distributions
-                                            --source : defined how and where to access the dataset
-                                            --dset : gave details about the specific dataset
-                                            -p : invoked name of the dataset package
+                                            --model : family of distributions
+                                            --source : how and where to access the dataset
+                                            --dset : details about the specific dataset
+                                            -p : name of the dataset package
                                             -x : selected predictors
-                                            -y : selected the variable to predict
+                                            -y : selected dependent variable
+                               
+                                     Important note: Keep in mind the results we are comparing
+                                     can differ between each other as there is an absolute
+                                     tolerance parameter set at 1e-05.
                                
                                      ''')
                     )
@@ -43,11 +46,12 @@ parser.add_argument("-y","--predicted", default="", type=str,
 # Passes all arguments into an object that retrive arguments with property-decorator style.
 args = parser.parse_args()
 
-
+# Imports all classes from different files.
 from GLMs_file import GeneralizedLinearModel, NormalDistr, PoissonDistr, BernoulliDistr
 from data_loader import DataLoader, CSV, StatsModel
 from test_file import test_dataset
 
+# Connects to data_loader based on the input.
 if args.source == "csv":
     example = CSV(args.predicted, args.predictors)
     example.readData(args.dset)
@@ -58,6 +62,7 @@ elif args.source == "statsmodel":
     if args.package != None:
         example.readData(args.dset, args.package)
 
+# Connects to GLMs_file based on the input.
 if args.model == "normal":
     result_model = NormalDistr(example.getX, example.getY)
 elif args.model == "poisson":
@@ -65,13 +70,5 @@ elif args.model == "poisson":
 elif args.model == "bernoulli":
     result_model = BernoulliDistr(example.getX, example.getY)
 
+# Calls the test function.
 test_dataset(result_model, example)
-
-# test for normal:
-## python user-interface.py --model normal --source statsmodel --dset Duncan -p carData -x education prestige -y income
-
-# test for poisson:
-## python user-interface.py --model poisson --source csv --dset https://raw.githubusercontent.com/BI-DS/GRA-4152/refs/heads/master/warpbreaks.csv -x wool tension -y breaks
-
-# test for bernoulli:
-## python user-interface.py --model bernoulli --source statsmodel --dset spector -x GPA TUCE PSI -y GRADE
